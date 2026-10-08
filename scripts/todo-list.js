@@ -189,18 +189,22 @@ function SaveToDoData() {
     localStorage.setItem("todoList", JSON.stringify(todoList));
 }
 
-// ----------------------- View All modal (preview shows only 3 tasks) -----------------------------
+// ----------------------- View All modal (pinned side panel) -----------------------------
+function isTodoPinned() {
+    return todoContainer.classList.contains("pinned");
+}
+
 function setExpanded(isExpanded) {
     todoContainer.classList.toggle("expanded", isExpanded);
     todoBackdrop.classList.toggle("active", isExpanded);
-    todoViewMoreBtn.textContent = isExpanded ? "Show Less" : "View More";
+    todoViewMoreBtn.textContent = isExpanded ? "Close" : "View all";
 }
 
 function updateViewMoreVisibility() {
-    const hasMore = todoulList.children.length > 3;
-    todoContainer.classList.toggle("has-more", hasMore);
-    if (!hasMore) {
-        setExpanded(false); // Collapse automatically if the list shrinks to 3 or fewer
+    const hasTasks = todoulList.children.length > 0;
+    todoContainer.classList.toggle("has-more", hasTasks);
+    if (!hasTasks) {
+        setExpanded(false); // Close the modal automatically if the list becomes empty
     }
 }
 
@@ -260,7 +264,7 @@ if (todoLastUpdateDate === todoCurrentDate) {
 
 // Toggle menu and tooltip visibility
 todoListCont.addEventListener("click", function (event) {
-    if (pinTodoListCheckbox.checked) return; // Pinned mode: icon is hidden, ignore clicks
+    if (isTodoPinned()) return; // Pinned mode: the icon toggles the side panel instead (see pin section)
 
     const isMenuVisible = todoContainer.style.display === "grid";
 
@@ -280,7 +284,7 @@ todoListCont.addEventListener("click", function (event) {
 
 // Close menu when clicking outside
 document.addEventListener("click", function (event) {
-    if (pinTodoListCheckbox.checked) {
+    if (isTodoPinned()) {
         event.stopPropagation();
         return; // Pinned mode: never close on outside click
     }
@@ -302,12 +306,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     todoListCheckbox.addEventListener("change", function () {
         saveCheckboxState("todoListCheckboxState", todoListCheckbox);
-        if (todoListCheckbox.checked) {
-            todoListCont.style.display = "flex";
-            saveDisplayStatus("todoListDisplayStatus", "flex");
-        } else {
-            todoListCont.style.display = "none";
-            saveDisplayStatus("todoListDisplayStatus", "none");
+        const displayStatus = todoListCheckbox.checked ? "flex" : "none";
+        saveDisplayStatus("todoListDisplayStatus", displayStatus);
+        if (!isTodoPinned()) {
+            todoListCont.style.display = displayStatus; // Icon stays hidden while the side panel is pinned
         }
     });
 
@@ -317,18 +319,28 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // ----------------------- Pin To Do List to New Tab -----------------------------
 document.addEventListener("DOMContentLoaded", function () {
-    const rightDiv = document.getElementById("rightDiv");
     const todoListCheckbox = document.getElementById("todoListCheckbox");
+    // The side panel only fits next to the main content on wide screens; below this, use the icon popup
+    const pinMediaQuery = window.matchMedia("(min-width: 1500px)");
 
-    function applyPinState(isPinned) {
+    // Whether the user collapsed the pinned side panel with the icon (persisted)
+    let isPanelHidden = localStorage.getItem("todoPanelHidden") === "true";
+
+    function applyPinState() {
+        const isPinned = pinTodoListCheckbox.checked && pinMediaQuery.matches;
+        const isPanelVisible = isPinned && !isPanelHidden;
         todoContainer.classList.toggle("pinned", isPinned);
+        document.body.classList.toggle("todo-pinned", isPanelVisible);
 
         if (isPinned) {
-            rightDiv.appendChild(todoContainer);
-            todoContainer.style.display = ""; // Let the ".pinned" CSS class control layout (flex, full width)
-            todoListCont.style.display = "none"; // Hide icon, it's redundant while pinned
+            todoContainer.style.display = isPanelVisible ? "" : "none"; // ".pinned" CSS class controls layout (side panel)
+            todoContainer.style.animation = "";
+            todoListCont.style.display = "flex"; // Icon acts as the show/hide toggle while pinned
+            todoListCont.classList.toggle("menu-open", isPanelVisible);
+            if (!isPanelVisible) {
+                setExpanded(false);
+            }
         } else {
-            document.body.insertBefore(todoContainer, todoListCont.nextSibling);
             todoContainer.style.display = "none";
             todoListCont.style.display = todoListCheckbox.checked ? "flex" : "none";
             setExpanded(false); // Close the "view all" modal if it was open
@@ -339,9 +351,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     pinTodoListCheckbox.addEventListener("change", function () {
         saveCheckboxState("pinTodoListCheckboxState", pinTodoListCheckbox);
-        applyPinState(pinTodoListCheckbox.checked);
+        applyPinState();
+    });
+
+    pinMediaQuery.addEventListener("change", applyPinState);
+
+    todoListCont.addEventListener("click", function () {
+        if (!isTodoPinned()) return; // Unpinned: the regular popup handler takes care of it
+
+        isPanelHidden = !isPanelHidden;
+        localStorage.setItem("todoPanelHidden", isPanelHidden);
+        applyPinState();
     });
 
     loadCheckboxState("pinTodoListCheckboxState", pinTodoListCheckbox);
-    applyPinState(pinTodoListCheckbox.checked);
+    applyPinState();
 });

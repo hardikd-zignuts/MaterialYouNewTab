@@ -1243,33 +1243,29 @@ body #bookmarkButton.bookmark-button.rotate {
 	}
 }
 
+/* Pinned mode: full-height side panel docked to the inline-start edge */
 .todo-container.pinned {
-	position: static;
-	top: auto;
+	position: fixed;
+	top: calc(var(--gap) + 56px); /* Leave room for the to-do icon, which toggles the panel */
+	bottom: calc(var(--shortcut-size) + var(--gap) * 2);
 	left: auto;
+	inset-inline-start: var(--gap);
 	transform-origin: unset;
 	display: flex;
 	flex-direction: column;
 	grid-template-columns: unset;
 	justify-items: unset;
+	width: 330px;
 	max-height: none;
-	overflow-y: visible;
-	width: 100%;
-	margin-top: 10px;
+	overflow: hidden;
 }
 
 .todo-container.pinned .todolist {
+	flex: 1 1 auto;
+	min-height: 0;
+	justify-content: flex-start;
 	overflow-y: auto;
 	scroll-behavior: smooth;
-}
-
-.todo-container.pinned:not(.expanded) .todolist {
-	max-height: none;
-}
-
-/* Preview mode: only show the first 3 tasks inline */
-.todo-container.pinned:not(.expanded) .todolist > .todolistitem:nth-child(n+4) {
-	display: none;
 }
 
 .todoViewMoreBtn {
@@ -1292,6 +1288,39 @@ body #bookmarkButton.bookmark-button.rotate {
 
 .todo-container.pinned.has-more .todoViewMoreBtn {
 	display: block;
+	flex-shrink: 0;
+	margin-top: auto;
+}
+
+/* Long tasks are clamped in the panel; the "View all" modal shows the full text */
+.todo-container.pinned:not(.expanded) .todolistitem:not(.edit) {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	overflow: hidden;
+	flex-shrink: 0;
+	/* Move block padding into a transparent border so overflow clips right after the 2nd line */
+	padding-block: 0;
+	border-block: 12px solid transparent;
+}
+
+/* Shift the main content so it is centered in the space beside the panel */
+body.todo-pinned {
+	box-sizing: border-box;
+	padding-inline-start: calc(330px + var(--gap) * 2);
+}
+
+body.todo-pinned .leftDiv {
+	transform: translateX(-50px);
+}
+
+body.todo-pinned:dir(rtl) .leftDiv {
+	transform: translateX(50px);
+}
+
+body.todo-pinned .rightDiv {
+	transform: translateX(50px);
 }
 
 /* Expanded "view all" modal state */
@@ -1308,9 +1337,7 @@ body #bookmarkButton.bookmark-button.rotate {
 }
 
 .todo-container.pinned.expanded {
-	position: fixed;
-	top: 50%;
-	left: 50%;
+	inset: 50% auto auto 50%;
 	transform: translate(-50%, -50%);
 	width: min(330px, 90vw);
 	max-height: 80vh;
@@ -5006,10 +5033,6 @@ body[data-bg="wallpaper"] .dropdown-content {
 		transform-origin: top left;
 		scale: 0.85;
 		position: fixed;
-	}
-	.todo-container.pinned {
-		position: static;
-		scale: 1;
 	}
 	.googleAppsCont {
 		transform-origin: top right;
