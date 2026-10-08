@@ -106,7 +106,10 @@
         </div>
         <ul class="todolist" id="todoullist">
         </ul>
+        <button type="button" id="todoViewMoreBtn" class="todoViewMoreBtn">View More</button>
     </div>
+
+    <div id="todoBackdrop" class="todo-backdrop"></div>
 
     <!-- --------------------- Bookmark System --------------------- -->
     <div style="display: none;">
@@ -1369,6 +1372,18 @@
                                         </div>
                                         <label class="switch">
                                             <input id="todoListCheckbox" type="checkbox">
+                                            <span class="toggle"></span>
+                                        </label>
+                                    </div>
+
+                                    <div class="ttcont" id="pinTodoListField">
+                                        <div class="texts">
+                                            <div class="bigText" id="pinTodoListText">Pin To Do List to New Tab</div>
+                                            <div class="infoText" id="pinTodoListInfo">Keep the To Do List always
+                                                visible on the page</div>
+                                        </div>
+                                        <label class="switch">
+                                            <input id="pinTodoListCheckbox" type="checkbox">
                                             <span class="toggle"></span>
                                         </label>
                                     </div>

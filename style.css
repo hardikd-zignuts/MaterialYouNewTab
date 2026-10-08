@@ -1243,6 +1243,109 @@ body #bookmarkButton.bookmark-button.rotate {
 	}
 }
 
+.todo-container.pinned {
+	position: static;
+	top: auto;
+	left: auto;
+	transform-origin: unset;
+	display: flex;
+	flex-direction: column;
+	grid-template-columns: unset;
+	justify-items: unset;
+	max-height: none;
+	overflow-y: visible;
+	width: 100%;
+	margin-top: 10px;
+}
+
+.todo-container.pinned .todolist {
+	overflow-y: auto;
+	scroll-behavior: smooth;
+}
+
+.todo-container.pinned:not(.expanded) .todolist {
+	max-height: none;
+}
+
+/* Preview mode: only show the first 3 tasks inline */
+.todo-container.pinned:not(.expanded) .todolist > .todolistitem:nth-child(n+4) {
+	display: none;
+}
+
+.todoViewMoreBtn {
+	display: none;
+	width: 100%;
+	padding: 8px;
+	margin-top: 2px;
+	border: none;
+	border-radius: 20px;
+	background: transparent;
+	color: var(--darkColor-blue);
+	font-size: 0.9rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.todoViewMoreBtn:hover {
+	text-decoration: underline;
+}
+
+.todo-container.pinned.has-more .todoViewMoreBtn {
+	display: block;
+}
+
+/* Expanded "view all" modal state */
+.todo-backdrop {
+	display: none;
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.45);
+	z-index: 4;
+}
+
+.todo-backdrop.active {
+	display: block;
+}
+
+.todo-container.pinned.expanded {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: min(330px, 90vw);
+	max-height: 80vh;
+	z-index: 5;
+}
+
+.todo-container.pinned.expanded .todolist {
+	max-height: calc(80vh - 170px);
+}
+
+.todo-container.pinned .todolist::-webkit-scrollbar {
+	width: 5px;
+}
+
+.todo-container.pinned .todolist::-webkit-scrollbar-track {
+	background-color: transparent;
+}
+
+.todo-container.pinned .todolist::-webkit-scrollbar-thumb {
+	background-color: var(--darkColor-blue);
+	border-radius: 3px;
+}
+
+.todo-container.pinned .todolist::-webkit-scrollbar-thumb:hover {
+	background-color: var(--darkerColor-blue);
+	border-radius: 3px;
+}
+
+@-moz-document url-prefix() {
+	.todo-container.pinned .todolist {
+		scrollbar-width: thin;
+		scrollbar-color: var(--darkColor-blue) transparent;
+	}
+}
+
 @keyframes panelScaleIn {
 	from {
 		transform: scale(0.8);
@@ -4903,6 +5006,10 @@ body[data-bg="wallpaper"] .dropdown-content {
 		transform-origin: top left;
 		scale: 0.85;
 		position: fixed;
+	}
+	.todo-container.pinned {
+		position: static;
+		scale: 1;
 	}
 	.googleAppsCont {
 		transform-origin: top right;

@@ -13,6 +13,9 @@ const todoListCont = document.getElementById("todoListCont");
 const todoulList = document.getElementById("todoullist");
 const todoAdd = document.getElementById("todoAdd");
 const todoInput = document.getElementById("todoInput");
+const pinTodoListCheckbox = document.getElementById("pinTodoListCheckbox");
+const todoViewMoreBtn = document.getElementById("todoViewMoreBtn");
+const todoBackdrop = document.getElementById("todoBackdrop");
 let todoList = {}; // Initialize todoList JSON
 let suppressNextClick = false;
 let suppressTimeout = null;
@@ -45,6 +48,7 @@ function addtodoItem() {
     todoulList.appendChild(li); // Append the new item to the DOM immediately
     todoInput.value = ""; // Clear Input
     SaveToDoData(); // Save changes
+    updateViewMoreVisibility();
 }
 
 function createTodoItemDOM(id, title, status, pinned) {
@@ -95,6 +99,7 @@ todoulList.addEventListener("click", (event) => {
         event.target.parentElement.remove(); // Remove the clicked LI tag
         delete todoList[id]; // Remove the deleted List item data
         SaveToDoData(); // Save Changes
+        updateViewMoreVisibility();
     }
     else if (event.target.classList.contains("todopinbtn")) {
         event.target.parentElement.classList.toggle("pinned"); // Check the clicked LI tag
@@ -184,6 +189,29 @@ function SaveToDoData() {
     localStorage.setItem("todoList", JSON.stringify(todoList));
 }
 
+// ----------------------- View All modal (preview shows only 3 tasks) -----------------------------
+function setExpanded(isExpanded) {
+    todoContainer.classList.toggle("expanded", isExpanded);
+    todoBackdrop.classList.toggle("active", isExpanded);
+    todoViewMoreBtn.textContent = isExpanded ? "Show Less" : "View More";
+}
+
+function updateViewMoreVisibility() {
+    const hasMore = todoulList.children.length > 3;
+    todoContainer.classList.toggle("has-more", hasMore);
+    if (!hasMore) {
+        setExpanded(false); // Collapse automatically if the list shrinks to 3 or fewer
+    }
+}
+
+todoViewMoreBtn.addEventListener("click", function () {
+    setExpanded(!todoContainer.classList.contains("expanded"));
+});
+
+todoBackdrop.addEventListener("click", function () {
+    setExpanded(false);
+});
+
 // Fetch saved JSON and create list items using it
 function ShowToDoList() {
     try {
@@ -201,6 +229,8 @@ function ShowToDoList() {
         console.error("Error loading from localStorage:", error);
         localStorage.setItem("todoList", "{}"); // Reset corrupted data
     }
+
+    updateViewMoreVisibility();
 }
 
 // Code to reset the List on the Next Day
@@ -230,6 +260,8 @@ if (todoLastUpdateDate === todoCurrentDate) {
 
 // Toggle menu and tooltip visibility
 todoListCont.addEventListener("click", function (event) {
+    if (pinTodoListCheckbox.checked) return; // Pinned mode: icon is hidden, ignore clicks
+
     const isMenuVisible = todoContainer.style.display === "grid";
 
     // Toggle menu visibility
@@ -248,6 +280,11 @@ todoListCont.addEventListener("click", function (event) {
 
 // Close menu when clicking outside
 document.addEventListener("click", function (event) {
+    if (pinTodoListCheckbox.checked) {
+        event.stopPropagation();
+        return; // Pinned mode: never close on outside click
+    }
+
     const isClickInside =
         todoContainer.contains(event.target) || todoListCont.contains(event.target) || event.target.classList.contains("todoremovebtn");
 
@@ -276,4 +313,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
     loadCheckboxState("todoListCheckboxState", todoListCheckbox);
     loadDisplayStatus("todoListDisplayStatus", todoListCont);
+});
+
+// ----------------------- Pin To Do List to New Tab -----------------------------
+document.addEventListener("DOMContentLoaded", function () {
+    const rightDiv = document.getElementById("rightDiv");
+    const todoListCheckbox = document.getElementById("todoListCheckbox");
+
+    function applyPinState(isPinned) {
+        todoContainer.classList.toggle("pinned", isPinned);
+
+        if (isPinned) {
+            rightDiv.appendChild(todoContainer);
+            todoContainer.style.display = ""; // Let the ".pinned" CSS class control layout (flex, full width)
+            todoListCont.style.display = "none"; // Hide icon, it's redundant while pinned
+        } else {
+            document.body.insertBefore(todoContainer, todoListCont.nextSibling);
+            todoContainer.style.display = "none";
+            todoListCont.style.display = todoListCheckbox.checked ? "flex" : "none";
+            setExpanded(false); // Close the "view all" modal if it was open
+        }
+
+        updateViewMoreVisibility();
+    }
+
+    pinTodoListCheckbox.addEventListener("change", function () {
+        saveCheckboxState("pinTodoListCheckboxState", pinTodoListCheckbox);
+        applyPinState(pinTodoListCheckbox.checked);
+    });
+
+    loadCheckboxState("pinTodoListCheckboxState", pinTodoListCheckbox);
+    applyPinState(pinTodoListCheckbox.checked);
 });
